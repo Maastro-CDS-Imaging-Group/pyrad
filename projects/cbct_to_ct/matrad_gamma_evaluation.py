@@ -5,16 +5,14 @@ import pandas as pd
 import numpy as np
 
 sys.path.append('.')
-from pyrad.utils import dose_eval, image_utils
-from pyrad.matrad_dose_calc_wrapper import MatRadDoseCalcWrapper
-
+from pyrad.interfaces import utils
 
 def main(args):
     dataset_path = args.dataset_path.resolve()
     outdir = args.output_dir.resolve()
     df = pd.DataFrame()
 
-    dose_calc = MatRadDoseCalcWrapper(".", "./projects/cbct_to_ct/plan_config.yaml")
+    utils.add_oc_paths()
 
     for folder in dataset_path.iterdir():
         if folder.is_dir():
@@ -37,10 +35,10 @@ def main(args):
             CBCT = sitk.GetArrayFromImage(CBCT)
             sCT = sitk.GetArrayFromImage(sCT)
 
-            _, pass_rate = dose_calc.compute_gamma_index(CT, CBCT, resolution, dose_difference=2, dta=2)
+            _, pass_rate = utils.compute_gamma_index(CT, CBCT, resolution, dose_difference=2, dta=2)
             print(f"Original pass rate: {pass_rate}")
 
-            _, pass_rate = dose_calc.compute_gamma_index(CT, sCT, resolution, dose_difference=2, dta=2)
+            _, pass_rate = utils.compute_gamma_index(CT, sCT, resolution, dose_difference=2, dta=2)
             print(f"Translated pass rate: {pass_rate}")
 
 

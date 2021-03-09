@@ -1,4 +1,4 @@
-function [dose_map, metadata] = dose_calc_fn(config, ct_path, mask_struct)
+function [dose_map, metadata] = run_dose_calculation(config, ct_path, mask_struct)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team. 

@@ -2,20 +2,19 @@ import sys
 
 sys.path.append('.')
 
-from pyrad.matrad_dose_calc_wrapper import MatRadDoseCalcWrapper
+from pyrad.interfaces import dose_calculation
 
 def main():
 
     masks = {
-        "TARGET": ['/home/suraj/Repositories/data/matRad_test/CTVcervixFull.nrrd'],
-        "OAR": ['/home/suraj/Repositories/data/matRad_test/BLADDER.nrrd',
-                '/home/suraj/Repositories/data/matRad_test/BOWELAREA.nrrd'],
-        "OTHER": ['/home/suraj/Repositories/data/matRad_test/BODY.nrrd']
+        "TARGET": ['/home/suraj/Repositories/data/NKI/evaluation_dataset/21006229/CTVcervixFull.nrrd'],
+        "OAR": ['/home/suraj/Repositories/data/NKI/evaluation_dataset/21006229/BLADDER.nrrd',
+                '/home/suraj/Repositories/data/NKI/evaluation_dataset/21006229/BOWELAREA.nrrd'],
+        "OTHER": ['/home/suraj/Repositories/data/NKI/evaluation_dataset/21006229/BODY.nrrd']
     }
 
-    dose_calc = MatRadDoseCalcWrapper(".", "./projects/cbct_to_ct/plan_config.yaml")
-    dose_calc("/home/suraj/Repositories/data/matRad_test/deformed.nrrd", masks)
-
+    pyrad_dose_calculation = dose_calculation.DoseCalculation()
+    pyrad_dose_calculation.run("/home/suraj/Repositories/data/NKI/evaluation_dataset/21006229/deformed.nrrd", masks)
 
 if __name__ == "__main__":
     main()

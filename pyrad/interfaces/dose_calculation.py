@@ -7,51 +7,43 @@ import yaml
 from oct2py import Oct2Py, get_log
 from oct2py import octave as oc
 
+from pyrad.interfaces import utils
 
-class MatRadDoseCalcWrapper:
-    def __init__(self, config):
+
+class DoseCalculation:
+    def __init__(self, config=None):
         self.setup_logging()
-
-        matRad_path = Path("./matRad").resolve()
-        pyrad_path = Path("./pyrad").resolve()
-
-        assert matRad_path.exists(), "matRad folder not found, please init the matRad submodule"
-
-        oc.addpath(str(matRad_path))
-        oc.addpath(str(pyrad_path))
-
-        # Add matrad tools suchas gamma index computation
-        oc.addpath(str(matRad_path / "tools"))
-        oc.addpath(str(pyrad_path / "utils"))
-
-        self.set_config(config)
+        utils.add_oc_paths()
+        self.set_treatment_plan(config)
 
     def setup_logging(self):
-        oc_logger = Oct2Py(logger=get_log())
-        oc_logger.logger = get_log('new_log')
-        oc_logger.logger.setLevel(logging.INFO)
+        self.oc_logger = Oct2Py(logger=get_log())
+        self.oc_logger.logger = get_log('dose_calculation')
+        self.oc_logger.logger.setLevel(logging.INFO)
 
-    def __call__(self, ct: Path, masks: dict, save_path: Path = None):
+    def run(self, ct: Path, masks: dict, save_path: Path = None):
         self.ct = Path(ct)
         self.masks = self.process_masks(masks)
-
-        self.compute_dose_map()
+        # Matrad dose_calc_fn is called
+        self.dose, self.metadata = oc.run_dose_calculation(self.config, str(self.ct), self.masks, nout=2)
         
         if save_path is None:
             save_path = self.ct.resolve().parent / "dose_map.nrrd"
             
         self.save_dose_map(str(save_path))
 
-    def set_config(self, config_path):
+    def set_treatment_plan(self, config_path):
         self.config = None
         if config_path is not None:
+            self.oc_logger.logger.info('Overriding default plan parameters from config: ' \
+                f'{config_path}')
             config_path = Path(config_path).resolve()
             with open(str(config_path), "r") as fp:
                 self.config = yaml.full_load(fp)
         
 
     def process_masks(self, masks):
-        assert "TARGET" in masks
+        assert "TARGET" in masks, "Dose calculation needs a TARGET mask"
         processed_masks = {}
 
         # Add targets to all masks
@@ -70,16 +62,11 @@ class MatRadDoseCalcWrapper:
         processed_masks["masks"] = [str(v) for v in processed_masks["masks"]]
 
         return processed_masks
-        
-    def compute_dose_map(self):
-        self.dose, self.metadata = oc.dose_calc_fn(self.config, str(self.ct), self.masks, nout=2)
-
-    def compute_gamma_index(self, dose1, dose2, resolution, dose_difference=3, dta=3, n=1):
-        pass_rate = oc.matRad_gammaIndex(dose1, dose2, resolution, [dose_difference, dta], nout=1)
-
-        return None, pass_rate
 
     def get_dose_map(self):
+        """
+        Get dose map SITK Image from dose computed with matrad
+        """
         self.dose = self.dose.transpose(2, 0, 1)
         dose_image = sitk.GetImageFromArray(self.dose)
 
@@ -88,5 +75,8 @@ class MatRadDoseCalcWrapper:
         return dose_image
 
     def save_dose_map(self, save_path):
+        """
+        Save dose map SITK Image to nrrd
+        """
         dose_image = self.get_dose_map()
         sitk.WriteImage(dose_image, save_path, True)

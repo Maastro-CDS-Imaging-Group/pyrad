@@ -4,7 +4,7 @@ sys.path.append('.')
 
 from pathlib import Path
 
-from pyrad.matrad_dose_calc_wrapper import MatRadDoseCalcWrapper
+from pyrad.interfaces import dose_calculation
 
 OARS = ["BOWELAREA", "BLADDER"]
 TARGETS = ["CTVcervix", "CTV"]
@@ -12,7 +12,7 @@ TARGETS = ["CTVcervix", "CTV"]
 def main(args):
     dataset_path = args.dataset_path.resolve()
     output_dir = args.output_dir.resolve()
-    dose_calc = MatRadDoseCalcWrapper("./projects/cbct_to_ct/plan_config.yaml")
+    pyrad_dose_calculation = dose_calculation.DoseCalculation(config="./projects/cbct_to_ct/configs/plan_config.yaml")
 
     for patient in dataset_path.iterdir():
         # Walk only through directories
@@ -45,16 +45,20 @@ def main(args):
             }
 
             print("Peforming dose calculation for CT ...")
-            dose_calc(CT, masks, save_path=patient/"ct_dose.nrrd")
-            CT_dose = dose_calc.get_dose_map()
+
+            pyrad_dose_calculation.run(CT, masks, save_path=patient/"ct_dose.nrrd")
+
+            CT_dose = pyrad_dose_calculation.get_dose_map()
 
             print("Peforming dose calculation for CBCT ...")
-            dose_calc(CBCT, masks, save_path=patient/"cbct_dose.nrrd")
-            CBCT_dose = dose_calc.get_dose_map()
+            pyrad_dose_calculation.run_dose_calculation(CBCT, masks, save_path=patient/"cbct_dose.nrrd")
+
+            CBCT_dose = pyrad_dose_calculation.get_dose_map()
 
             print("Peforming dose calculation for sCT ...")
-            dose_calc(sCT, masks, save_path=patient/"sct_dose.nrrd")
-            sCT_dose = dose_calc.get_dose_map()
+            pyrad_dose_calculation.run_dose_calculation(sCT, masks, save_path=patient/"sct_dose.nrrd")
+
+            sCT_dose = pyrad_dose_calculation.get_dose_map()
 
 if __name__ == "__main__":
     import argparse
