@@ -6,7 +6,6 @@ function [original] = override_struct(original, config)
             else
                 printf("Overriding %s \n", key);
                 original.(key) = config.(key);
-                return;
             end
         end
     end

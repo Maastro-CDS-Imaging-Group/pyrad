@@ -6,8 +6,10 @@ import SimpleITK as sitk
 import yaml
 from oct2py import Oct2Py, get_log
 from oct2py import octave as oc
+from omegaconf import OmegaConf
 
 from pyrad.interfaces import utils
+from pyrad.configs import tp_config
 
 
 class DoseCalculation:
@@ -33,14 +35,13 @@ class DoseCalculation:
         self.save_dose_map(str(save_path))
 
     def set_treatment_plan(self, config_path):
-        self.config = None
-        if config_path is not None:
-            self.oc_logger.logger.info('Overriding default plan parameters from config: ' \
-                f'{config_path}')
-            config_path = Path(config_path).resolve()
-            with open(str(config_path), "r") as fp:
-                self.config = yaml.full_load(fp)
-        
+        conf = OmegaConf.structured(tp_config.TreatmentPlanConfig)
+        yaml_file = OmegaConf.load(config_path)
+
+        self.config = OmegaConf.merge(conf, yaml_file)
+
+        # Convert DictConfig to Dict 
+        self.config = OmegaConf.to_container(self.config)
 
     def process_masks(self, masks):
         assert "TARGET" in masks, "Dose calculation needs a TARGET mask"

@@ -25,7 +25,8 @@ for cstIndex=1:size(cst,1)
   %else
    %   cst{cstIndex,6}{end+1} = struct(DoseObjectives.matRad_SquaredOverdosing);
   end
-end  
+end
+
 % meta information for treatment plan
 
 pln.radiationMode   = 'photons';     % either photons / protons / carbon

@@ -34,8 +34,8 @@ for cstIndex=1:size(cst, 1)
 end
 
 
-pln = get_default_plan(ct, cst);
-pln = override_struct(pln, config);
+pln = get_treatment_plan(ct, cst, config);
+display(pln);
 
 
 %% generate steering file

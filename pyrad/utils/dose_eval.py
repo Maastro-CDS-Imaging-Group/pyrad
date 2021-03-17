@@ -39,5 +39,13 @@ def calculate_gamma(dose1: sitk.Image, dose2: sitk.Image, params):
     return gamma_map, passing_rate
 
 
-def calculate_dose_diff(dose1: sitk.Image, dose2: sitk.Image):
-    return dose1 - dose2
+def calculate_dose_diff(ref: sitk.Image, pred: sitk.Image):
+    pred_array = sitk.GetArrayFromImage(pred)
+    ref_array = sitk.GetArrayFromImage(ref)
+
+    diff =  np.abs(pred_array - ref_array) / ref_array
+
+    diff = sitk.GetImageFromArray(diff)
+    diff.CopyInformation(pred)
+
+    return diff 

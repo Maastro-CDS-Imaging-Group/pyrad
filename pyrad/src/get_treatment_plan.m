@@ -1,4 +1,4 @@
-function [pln] = get_default_plan(ct, cst)
+function [pln] = get_treatment_plan(ct, cst, config)
 % Get default plan to run in case user specified parameters are not found.
 
 pln.radiationMode   = 'photons';     % either photons / protons / carbon
@@ -9,6 +9,9 @@ pln.numOfFractions  = 30;
 % beam geometry settings
 pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.gantryAngles   = [0 90 180];
+
+pln = override_struct(pln, config);
+
 pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter       = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);

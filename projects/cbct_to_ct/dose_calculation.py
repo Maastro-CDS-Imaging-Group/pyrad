@@ -6,8 +6,9 @@ from pathlib import Path
 
 from pyrad.interfaces import dose_calculation
 
-OARS = ["BOWELAREA", "BLADDER"]
-TARGETS = ["CTVcervix", "CTV"]
+# Organs at risk for cervical cancer
+OARS = ["BOWELAREA", "BLADDER", "RECTUM", "RING", "SMALLBOWEL", "SIGMOID", "Ring"]
+TARGETS = ["CTV"]
 
 def main(args):
     dataset_path = args.dataset_path.resolve()
@@ -44,7 +45,8 @@ def main(args):
                 "OTHER": [body_mask]
             }
 
-            print("Peforming dose calculation for CT ...")
+            print("Peforming dose calculation for CT ... \n")
+            print(f"Targets: {target_masks} and Organs at Risk: {oar_masks}")
 
             pyrad_dose_calculation.run(CT, masks, save_path=patient/"ct_dose.nrrd")
 
