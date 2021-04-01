@@ -105,12 +105,16 @@ def dosimetric_analysis(target_dose, pred_dose, prefix='', patient='.'):
     metric_dict = {}
 
     dose_diff = dose_eval.calculate_dose_diff(target_dose, pred_dose)
-    metric_dict.update({f'{prefix}_dose_diff_{k}': v for k, v in image_utils.get_abs_value_stats(dose_diff).items()})
+    metric_dict.update({f'{prefix}_dose_diff_{k}': v for k, v in image_utils.get_stats(dose_diff).items()})
     sitk.WriteImage(dose_diff, str(patient / f"{prefix}_dose_diff.nrrd"))
             
     # Save image preview
-    image_utils.save_dose_diff(dose_diff, label='{prefix} - Relative dose difference', dir=patient, limit=(-1, 1))
+    image_utils.save_dose_diff(dose_diff, label=f'{prefix} - Relative dose difference', dir=patient, limit=(-1, 1))
+
+    # Gamma index analysis
     resolution = list(target_dose.GetSpacing())
+    target_dose = sitk.GetArrayFromImage(target_dose)
+    pred_dose = sitk.GetArrayFromImage(pred_dose)
 
     for gamma_opt in GAMMA_OPTS:
         _, pass_rate = utils.compute_gamma_index(target_dose, pred_dose, resolution, \

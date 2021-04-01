@@ -82,6 +82,16 @@ def get_abs_value_stats(image: sitk.Image):
     }
 
 
+def get_stats(image: sitk.Image):
+    array = sitk.GetArrayFromImage(image)
+    array = np.abs(array)
+    array = array[np.isfinite(array)]
+
+    return {
+        'mean': np.mean(array),
+        'max': np.max(array)
+    }
+
 def resample_image_to_spacing(image,
                               new_spacing,
                               default_value,
