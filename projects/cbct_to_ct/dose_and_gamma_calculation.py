@@ -110,9 +110,10 @@ def dosimetric_analysis(target_dose, pred_dose, prefix='', patient='.'):
             
     # Save image preview
     image_utils.save_dose_diff(dose_diff, label='{prefix} - Relative dose difference', dir=patient, limit=(-1, 1))
+    resolution = list(target_dose.GetSpacing())
 
     for gamma_opt in GAMMA_OPTS:
-        _, pass_rate = utils.compute_gamma_index(CT_dose, CBCT_dose, resolution, \
+        _, pass_rate = utils.compute_gamma_index(target_dose, pred_dose, resolution, \
             dose_difference=gamma_opt['dose_percent_threshold'], dta=gamma_opt['distance_mm_threshold'])
         
         metric_dict[f"{prefix}_passing_rate_{gamma_opt['dose_percent_threshold']}%_{gamma_opt['distance_mm_threshold']}mm"] = pass_rate
