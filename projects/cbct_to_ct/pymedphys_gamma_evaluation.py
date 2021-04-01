@@ -16,15 +16,9 @@ logger = logging.getLogger(__name__)
 # Options for gamma calculation.
 # https://docs.pymedphys.com/lib/howto/gamma/effect-of-noise.html
 GAMMA_OPTS = {
-    'dose_percent_threshold': 3,
-    'distance_mm_threshold': 3,
-    'lower_percent_dose_cutoff': 20, # 20 should be good
-    'interp_fraction': 10,  # Should be 10 or more for more accurate results
-    'max_gamma': 2,
-    'random_subset': None,
-    'local_gamma': True,
-    'ram_available': 2**30,  # 1/2 GB
-    'quiet': True
+    'dose_percent_threshold': 2,
+    'distance_mm_threshold': 1,
+    'local_gamma': False
 }
 
 # Try out 1%/1mm and 1%/2mm
@@ -51,24 +45,23 @@ def dose_evaluation(CT, CBCT, sCT, patient_dir='patient'):
     sitk.WriteImage(sCT_dose_diff, str(patient_dir / "sct_dose_diff.nrrd"))
     
     # Save image preview
-    image_utils.save_dose_diff(CBCT_dose_diff, label='original_dose_difference', dir=patient_dir, limit=(-1, 1))
-    image_utils.save_dose_diff(sCT_dose_diff, label='translated_dose_difference', dir=patient_dir, limit=(-1, 1))
 
+    image_utils.save_dose_diff(CBCT_dose_diff, label='Original - Relative dose difference', dir=patient_dir, limit=(-1, 1))
+    image_utils.save_dose_diff(sCT_dose_diff, label='Translated - Relative dose difference', dir=patient_dir, limit=(-1, 1))
 
-    exit()
     # Compute gamma passing rates for CT-CBCT and sCT-CT
     CBCT_gamma, passing_rate_CBCT = dose_eval.calculate_gamma(CT, CBCT, GAMMA_OPTS)
-    sCT_gamma, passing_rate_sCT = dose_eval.calculate_gamma(CT, sCT, GAMMA_OPTS)
-
-
     metric_dict['cbct_passing_rate'] = passing_rate_CBCT
-    metric_dict['sct_passing_rate'] = passing_rate_sCT
-
+    print(f"CBCT passing rate: {passing_rate_CBCT}")
     sitk.WriteImage(CBCT_gamma, str(patient_dir / "cbct_gamma.nrrd"))
+    image_utils.save_gamma(CBCT_gamma, label='original_gamma', dir=patient_dir)
+
+    sCT_gamma, passing_rate_sCT = dose_eval.calculate_gamma(CT, sCT, GAMMA_OPTS)
+    metric_dict['sct_passing_rate'] = passing_rate_sCT
+    print(f"sCT passing rate: {passing_rate_sCT}")
     sitk.WriteImage(sCT_gamma, str(patient_dir / "sct_gamma.nrrd"))
     
     # Save image preview
-    image_utils.save_gamma(CBCT_gamma, label='original_gamma', dir=patient_dir)
     image_utils.save_gamma(sCT_gamma, label='translated_gamma', dir=patient_dir)
 
     return metric_dict

@@ -7,6 +7,11 @@ import numpy as np
 sys.path.append('.')
 from pyrad.interfaces import utils
 
+GAMMA_OPTS = {
+    'dose_percent_threshold': 1,
+    'distance_mm_threshold': 1,
+}
+
 def main(args):
     dataset_path = args.dataset_path.resolve()
     outdir = args.output_dir.resolve()
@@ -35,10 +40,12 @@ def main(args):
             CBCT = sitk.GetArrayFromImage(CBCT)
             sCT = sitk.GetArrayFromImage(sCT)
 
-            _, pass_rate = utils.compute_gamma_index(CT, CBCT, resolution, dose_difference=2, dta=2)
+            _, pass_rate = utils.compute_gamma_index(CT, CBCT, resolution, \
+                 dose_difference=GAMMA_OPTS['dose_percent_threshold'], dta=GAMMA_OPTS['distance_mm_threshold'])
             print(f"Original pass rate: {pass_rate}")
 
-            _, pass_rate = utils.compute_gamma_index(CT, sCT, resolution, dose_difference=2, dta=2)
+            _, pass_rate = utils.compute_gamma_index(CT, sCT, resolution, \
+                dose_difference=GAMMA_OPTS['dose_percent_threshold'], dta=GAMMA_OPTS['distance_mm_threshold'])
             print(f"Translated pass rate: {pass_rate}")
 
 

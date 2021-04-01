@@ -5,12 +5,14 @@ pln.radiationMode   = 'photons';     % either photons / protons / carbon
 pln.machine         = 'Generic';
 
 pln.numOfFractions  = 30;
+pln = override_struct(pln, config);
+
 
 % beam geometry settings
 pln.propStf.bixelWidth      = 5; % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.gantryAngles   = [0 90 180];
 
-pln = override_struct(pln, config);
+pln.propStf = override_struct(pln.propStf, config.propStf);
 
 pln.propStf.couchAngles    = zeros(1,numel(pln.propStf.gantryAngles));
 pln.propStf.numOfBeams      = numel(pln.propStf.gantryAngles);

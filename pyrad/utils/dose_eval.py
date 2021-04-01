@@ -43,7 +43,7 @@ def calculate_dose_diff(ref: sitk.Image, pred: sitk.Image):
     pred_array = sitk.GetArrayFromImage(pred)
     ref_array = sitk.GetArrayFromImage(ref)
 
-    diff =  np.abs(pred_array - ref_array) / ref_array
+    diff =  (pred_array - ref_array) / ref_array
 
     diff = sitk.GetImageFromArray(diff)
     diff.CopyInformation(pred)

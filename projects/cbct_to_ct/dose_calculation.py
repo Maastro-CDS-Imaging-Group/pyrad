@@ -12,7 +12,6 @@ TARGETS = ["CTV"]
 
 def main(args):
     dataset_path = args.dataset_path.resolve()
-    output_dir = args.output_dir.resolve()
     pyrad_dose_calculation = dose_calculation.DoseCalculation(config="./projects/cbct_to_ct/configs/plan_config.yaml")
 
     for patient in dataset_path.iterdir():
@@ -46,20 +45,17 @@ def main(args):
             }
 
             print("Peforming dose calculation for CT ... \n")
+
             print(f"Targets: {target_masks} and Organs at Risk: {oar_masks}")
-
             pyrad_dose_calculation.run(CT, masks, save_path=patient/"ct_dose.nrrd")
-
             CT_dose = pyrad_dose_calculation.get_dose_map()
 
             print("Peforming dose calculation for CBCT ...")
-            pyrad_dose_calculation.run_dose_calculation(CBCT, masks, save_path=patient/"cbct_dose.nrrd")
-
+            pyrad_dose_calculation.run(CBCT, masks, save_path=patient/"cbct_dose.nrrd")
             CBCT_dose = pyrad_dose_calculation.get_dose_map()
 
             print("Peforming dose calculation for sCT ...")
-            pyrad_dose_calculation.run_dose_calculation(sCT, masks, save_path=patient/"sct_dose.nrrd")
-
+            pyrad_dose_calculation.run(sCT, masks, save_path=patient/"sct_dose.nrrd")
             sCT_dose = pyrad_dose_calculation.get_dose_map()
 
 if __name__ == "__main__":
@@ -71,10 +67,6 @@ if __name__ == "__main__":
         )
 
     parser.add_argument("dataset_path", help="Path to dataset", type=Path)
-
-    # Output dir to store dose maps and gamma index maps
-    parser.add_argument("--output_dir", help="Path where the output will be stored", default="out", type=Path)
-
     args = parser.parse_args()
 
     main(args)

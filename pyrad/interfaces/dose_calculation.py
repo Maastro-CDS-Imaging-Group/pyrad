@@ -28,7 +28,8 @@ class DoseCalculation:
         self.masks = self.process_masks(masks)
         # Matrad dose_calc_fn is called
         self.dose, self.metadata = oc.run_dose_calculation(self.config, str(self.ct), self.masks, nout=2)
-        
+        self.dose = self.dose.transpose(2, 0, 1)
+
         if save_path is None:
             save_path = self.ct.resolve().parent / "dose_map.nrrd"
             
@@ -68,9 +69,7 @@ class DoseCalculation:
         """
         Get dose map SITK Image from dose computed with matrad
         """
-        self.dose = self.dose.transpose(2, 0, 1)
         dose_image = sitk.GetImageFromArray(self.dose)
-
         ct_image = sitk.ReadImage(str(self.ct))
         dose_image.CopyInformation(ct_image)
         return dose_image
