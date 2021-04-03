@@ -4,6 +4,7 @@ sys.path.append('.')
 
 from pathlib import Path
 
+import multiprocessing
 import pandas as pd
 import SimpleITK as sitk
 from pyrad.interfaces import dose_calculation, utils
@@ -34,7 +35,7 @@ def main(args):
     if args.cores > 1:
         print(f"Running in multiprocessing mode with cores: {args.cores}")
         with multiprocessing.Pool(processes=args.cores) as pool:
-            metrics_dict = pool.starmap(calculate_dose, patient_dirs)
+            metrics_dict = pool.map(calculate_dose, patient_dirs)
             for metric_dict in metrics_dict:
                 df= df.append(metric_dict, ignore_index=True)
     else:

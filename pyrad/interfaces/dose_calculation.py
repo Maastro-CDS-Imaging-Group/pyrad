@@ -5,7 +5,6 @@ import numpy as np
 import SimpleITK as sitk
 import yaml
 from oct2py import Oct2Py, get_log
-from oct2py import octave as oc
 from omegaconf import OmegaConf
 
 from pyrad.interfaces import utils
@@ -14,20 +13,20 @@ from pyrad.configs import tp_config
 
 class DoseCalculation:
     def __init__(self, config=None):
-        self.setup_logging()
-        utils.add_oc_paths()
+        self.setup_environment()
         self.set_treatment_plan(config)
 
-    def setup_logging(self):
-        self.oc_logger = Oct2Py(logger=get_log())
-        self.oc_logger.logger = get_log('dose_calculation')
-        self.oc_logger.logger.setLevel(logging.INFO)
+    def setup_environment(self):
+        self.oc = Oct2Py(logger=get_log())
+        self.oc.logger = get_log('dose_calculation')
+        self.oc.logger.setLevel(logging.INFO)
+        utils.add_oc_paths(self.oc)
 
     def run(self, ct: Path, masks: dict, save_path: Path = None):
         self.ct = Path(ct)
         self.masks = self.process_masks(masks)
         # Matrad dose_calc_fn is called
-        self.dose, self.metadata = oc.run_dose_calculation(self.config, str(self.ct), self.masks, nout=2)
+        self.dose, self.metadata = self.oc.run_dose_calculation(self.config, str(self.ct), self.masks, nout=2)
         self.dose = self.dose.transpose(2, 0, 1)
 
         if save_path is None:
@@ -64,6 +63,7 @@ class DoseCalculation:
         processed_masks["masks"] = [str(v) for v in processed_masks["masks"]]
 
         return processed_masks
+
 
     def get_dose_map(self):
         """
