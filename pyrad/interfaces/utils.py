@@ -19,6 +19,21 @@ def add_oc_paths(octave_interface):
     octave_interface.addpath(str(matRad_path / "tools"))
     octave_interface.addpath(str(pyrad_path / "utils"))
 
+def fetch_masks_from_config(patient, mask_set):
+    masks = []
+    for mask in mask_set:
+        mask["path"] = sorted(list(patient.glob(f"*{mask['label']}*")))
+
+        if len(mask["path"]) == 0:
+            print(f"{mask['label']} not found for {patient.stem}")
+            continue
+        else:
+            mask["path"] = mask["path"][0]
+
+        masks.append(mask)
+
+    return masks
+
 def compute_gamma_index(dose1, dose2, resolution, dose_difference=3, dta=3, n=1):
     # Create new octave instance for gamma index inorder to isolate it.
     oc = Oct2Py()

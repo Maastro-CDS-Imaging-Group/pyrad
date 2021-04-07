@@ -48,17 +48,17 @@ class DoseCalculation:
         processed_masks = {}
 
         # Add targets to all masks
-        processed_masks["masks"] = [v for v in masks["TARGET"]]
+        processed_masks["masks"] = [v["path"] for v in masks["TARGET"]]
         # If oars are provided, add it to masks
         if "OAR" in masks:
-            processed_masks["masks"].extend(masks["OAR"])
+            processed_masks["masks"].extend([v["path"] for v in masks["OAR"]])
         # If masks that are neither OAR or TARGETS are provided
         if "OTHER" in masks:
-            processed_masks["masks"].extend(masks["OTHER"])
+            processed_masks["masks"].extend([v["path"] for v in masks["OTHER"]])
 
         for key in masks:
-            masks[key] = [Path(v).resolve() for v in masks[key]]
-            processed_masks[key] = {path.stem:str(path) for path in masks[key]}
+            # The format for a processed mask is {"CTVcervix": (path, penalty)}
+            processed_masks[key] = {Path(v["path"]).resolve().stem:(str(v["path"]), v["penalty"]) for v in masks[key]}
 
         processed_masks["masks"] = [str(v) for v in processed_masks["masks"]]
 

@@ -11,8 +11,19 @@ from pyrad.interfaces import dose_calculation, utils
 from pyrad.utils import dose_eval, image_utils
 
 # Organs at risk for cervical cancer
-OARS = ["BOWELAREA", "BLADDER", "RECTUM", "RING", "SMALLBOWEL", "SIGMOID", "Ring"]
-TARGETS = ["CTV"]
+OARS = [{"label": "BOWELAREA", "penalty": 300}, 
+{"label": "BLADDER", "penalty": 300},
+{"label": "RECTUM", "penalty": 300,},
+{"label": "SMALLBOWEL", "penalty": 300},
+{"label": "SIGMOID", "penalty": 300}]
+
+TARGETS = [{"label": "CTVcervix", "penalty": 1000}, 
+{"label": "CTVuterus", "penalty": 1000},
+{"label": "CTVln_L", "penalty": 1000},
+{"label": "CTVln_R", "penalty": 1000}]
+
+OTHERS = [{"label": "BODY", "penalty": 100}]
+
 
 # List of dicts specifying gamma options
 GAMMA_OPTS = [{
@@ -37,13 +48,12 @@ def main(args):
         with multiprocessing.Pool(processes=args.cores) as pool:
             metrics_dict = pool.map(calculate_dose, patient_dirs)
             for metric_dict in metrics_dict:
-                df= df.append(metric_dict, ignore_index=True)
+                df = df.append(metric_dict, ignore_index=True)
     else:
         print(f"Running in main process only")
         for patient in patient_dirs:
             metric_dict = calculate_dose(patient)
             df = df.append(metric_dict, ignore_index=True)
-            break
 
     df.to_csv("dosimetrics.csv")
 
@@ -63,13 +73,9 @@ def calculate_dose(patient):
     'patient': patient.stem
     }
 
-    target_masks, oar_masks = [], []
-
-    for target in TARGETS:
-        target_masks.extend(list(patient.glob(f"*{target}*")))
-    
-    for oar in OARS:
-        oar_masks.extend(list(patient.glob(f"*{oar}*")))
+    target_masks = utils.fetch_masks_from_config(patient, TARGETS)
+    oar_masks = utils.fetch_masks_from_config(patient, OARS)
+    other_masks = utils.fetch_masks_from_config(patient, OTHERS)
 
     if not target_masks:
         print(f"Skipping patient {patient} ... No target mask for dose calculation")
@@ -78,26 +84,28 @@ def calculate_dose(patient):
     masks = {
         "TARGET": target_masks,
         "OAR": oar_masks,
-        "OTHER": [body_mask]
+        "OTHER": other_masks
     }
 
     print("Peforming dose calculation for CT ... \n")
     print(f"Targets: {target_masks} and Organs at Risk: {oar_masks}")
 
-    pyrad_dose_calculation.run(CT, masks, save_path=patient/"ct_dose.nrrd")
+
+    dose_dir = patient / "dose"
+    pyrad_dose_calculation.run(CT, masks, save_path=dose_dir/"ct_dose.nrrd")
     CT_dose = pyrad_dose_calculation.get_dose_map()
 
     print("Peforming dose calculation for CBCT ...")
-    pyrad_dose_calculation.run(CBCT, masks, save_path=patient/"cbct_dose.nrrd")
+    pyrad_dose_calculation.run(CBCT, masks, save_path=dose_dir/"cbct_dose.nrrd")
     CBCT_dose = pyrad_dose_calculation.get_dose_map()
 
     print("Peforming dose calculation for sCT ...")
-    pyrad_dose_calculation.run(sCT, masks, save_path=patient/"sct_dose.nrrd")
+    pyrad_dose_calculation.run(sCT, masks, save_path=dose_dir/"sct_dose.nrrd")
     sCT_dose = pyrad_dose_calculation.get_dose_map()
 
     # Dosimetric Analysis
-    metric_dict.update(dosimetric_analysis(CT_dose, CBCT_dose, prefix='CBCT', patient=patient))
-    metric_dict.update(dosimetric_analysis(CT_dose, sCT_dose, prefix='sCT', patient=patient))
+    metric_dict.update(dosimetric_analysis(CT_dose, CBCT_dose, prefix='CBCT', patient=dose_dir))
+    metric_dict.update(dosimetric_analysis(CT_dose, sCT_dose, prefix='sCT', patient=dose_dir))
 
     return metric_dict
 

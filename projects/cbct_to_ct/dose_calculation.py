@@ -4,11 +4,21 @@ sys.path.append('.')
 
 from pathlib import Path
 
-from pyrad.interfaces import dose_calculation
+from pyrad.interfaces import dose_calculation, utils
 
 # Organs at risk for cervical cancer
-OARS = ["BOWELAREA", "BLADDER", "RECTUM", "RING", "SMALLBOWEL", "SIGMOID", "Ring"]
-TARGETS = ["CTV"]
+OARS = [{"label": "BOWELAREA", "penalty": 300}, 
+{"label": "BLADDER", "penalty": 300},
+{"label": "RECTUM", "penalty": 300,},
+{"label": "SMALLBOWEL", "penalty": 300},
+{"label": "SIGMOID", "penalty": 300}]
+
+TARGETS = [{"label": "CTVcervix", "penalty": 1000}, 
+{"label": "CTVuterus", "penalty": 1000},
+{"label": "CTVln_L", "penalty": 1000},
+{"label": "CTVln_R", "penalty": 1000}]
+
+OTHERS = [{"label": "BODY", "penalty": 100}]
 
 def main(args):
     dataset_path = args.dataset_path.resolve()
@@ -26,24 +36,20 @@ def main(args):
                 print(f"Skipping patient {patient} as one of the mandatory files don't exist")
                 continue
 
-            target_masks, oar_masks = [], []
 
-            for target in TARGETS:
-                target_masks.extend(list(patient.glob(f"*{target}*")))
-            
-            for oar in OARS:
-                oar_masks.extend(list(patient.glob(f"*{oar}*")))
+            target_masks = utils.fetch_masks_from_config(patient, TARGETS)
+            oar_masks = utils.fetch_masks_from_config(patient, OARS)
+            other_masks = utils.fetch_masks_from_config(patient, OTHERS)
 
             if not target_masks:
                 print(f"Skipping patient {patient} ... No target mask for dose calculation")
-                continue
+                return {}
 
             masks = {
                 "TARGET": target_masks,
                 "OAR": oar_masks,
-                "OTHER": [body_mask]
+                "OTHER": other_masks
             }
-
             print("Peforming dose calculation for CT ... \n")
 
             print(f"Targets: {target_masks} and Organs at Risk: {oar_masks}")
