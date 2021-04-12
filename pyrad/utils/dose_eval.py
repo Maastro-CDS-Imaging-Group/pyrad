@@ -8,6 +8,7 @@ from pyrad.utils import image_utils
 
 def calculate_gamma(dose1: sitk.Image, dose2: sitk.Image, params):
     assert isinstance(dose1, sitk.Image)
+
     reference = dose1
 
     # Get physical coordinates for x, y and z axes.
@@ -21,9 +22,11 @@ def calculate_gamma(dose1: sitk.Image, dose2: sitk.Image, params):
                                         for idx in range(dose1.GetSize()[2])])
 
     coords = (z, y, x)
-    dose1 = sitk.GetArrayFromImage(dose1)
-    dose2 = sitk.GetArrayFromImage(dose2)
 
+    dose1 = sitk.GetArrayFromImage(dose1)
+    dose1 = np.nan_to_num(dose1)
+    dose2 = sitk.GetArrayFromImage(dose2)
+    dose2 = np.nan_to_num(dose2)
     # Pymedphys gamma implementation: https://docs.pymedphys.com/lib/ref/gamma.html
     gamma_map = pymedphys.gamma(coords, dose1, coords, dose2,
                             **params)

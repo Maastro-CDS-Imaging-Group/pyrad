@@ -26,15 +26,21 @@ def fetch_masks_from_config(patient, mask_set):
         if isinstance(mask["label"], list):
             for mask_stem in mask["label"]:
                 mask["path"] = (patient / mask_stem).with_suffix(".nrrd")
-                if not mask["path"].exists():
-                    continue
+
+                # Check if the label provided in the list of labels is 
+                # a valid path
+                if mask["path"].exists():
+                    break
 
         else:
             mask["path"] = (patient / mask["label"]).with_suffix(".nrrd")
-            if not mask["path"].exists():
-                continue
+            
+        # If path is not valid, the mask is not considered
+        if not mask["path"].exists():
+            continue
 
         masks.append(mask)
+
     return masks
 
 def compute_gamma_index(dose1, dose2, resolution, dose_difference=3, dta=3, n=0, local=True):
