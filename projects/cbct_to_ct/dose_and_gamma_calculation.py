@@ -17,24 +17,26 @@ OARS = [{"label": "BOWELAREA", "penalty": 300},
 {"label": "SMALLBOWEL", "penalty": 300},
 {"label": "SIGMOID", "penalty": 300}]
 
-TARGETS = [{"label": "CTVcervix", "penalty": 1000}, 
-{"label": "CTVuterus", "penalty": 1000},
-{"label": "CTVln_L", "penalty": 1000},
-{"label": "CTVln_R", "penalty": 1000}]
+TARGETS = [{"label": ["PTVtot", "PTV", "LP1_PTVtot"], "penalty": 800}]
 
 OTHERS = [{"label": "BODY", "penalty": 100}]
 
 
 # List of dicts specifying gamma options
-GAMMA_OPTS = [{
+GAMMA_OPTS = [
+    {
+    'dose_percent_threshold': 1,
+    'distance_mm_threshold': 1,
+},
+{
     'dose_percent_threshold': 2,
     'distance_mm_threshold': 2,
 }, {
     'dose_percent_threshold': 1,
     'distance_mm_threshold': 2,
 }, {
-    'dose_percent_threshold': 1,
-    'distance_mm_threshold': 1,
+    'dose_percent_threshold': 3,
+    'distance_mm_threshold': 3,
 }]
 
 
@@ -55,7 +57,7 @@ def main(args):
             metric_dict = calculate_dose(patient)
             df = df.append(metric_dict, ignore_index=True)
 
-    df.to_csv("dosimetrics.csv")
+    df.to_csv(dataset_path / "dosimetrics.csv")
 
 
 def calculate_dose(patient):
@@ -92,6 +94,7 @@ def calculate_dose(patient):
 
 
     dose_dir = patient / "dose"
+    dose_dir.mkdir(parents=True, exist_ok=True)
     pyrad_dose_calculation.run(CT, masks, save_path=dose_dir/"ct_dose.nrrd")
     CT_dose = pyrad_dose_calculation.get_dose_map()
 

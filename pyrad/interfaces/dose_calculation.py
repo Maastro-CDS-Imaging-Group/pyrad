@@ -6,6 +6,7 @@ import SimpleITK as sitk
 import yaml
 from oct2py import Oct2Py, get_log
 from omegaconf import OmegaConf
+from loguru import logger
 
 from pyrad.interfaces import utils
 from pyrad.configs import tp_config
@@ -17,14 +18,15 @@ class DoseCalculation:
         self.set_treatment_plan(config)
 
     def setup_environment(self):
-        self.oc = Oct2Py(logger=get_log())
-        self.oc.logger = get_log('dose_calculation')
-        self.oc.logger.setLevel(logging.INFO)
+        logger.add('dose_calculation.log', level='INFO')
+        self.oc = Oct2Py(logger=logger)
         utils.add_oc_paths(self.oc)
 
     def run(self, ct: Path, masks: dict, save_path: Path = None):
         self.ct = Path(ct)
         self.masks = self.process_masks(masks)
+
+        self.oc.logger.info(f"Patient: {ct.parent.stem}, Masks: {self.masks}")
         # Matrad dose_calc_fn is called
         self.dose, self.metadata = self.oc.run_dose_calculation(self.config, str(self.ct), self.masks, nout=2)
         self.dose = self.dose.transpose(2, 0, 1)

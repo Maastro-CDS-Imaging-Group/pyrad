@@ -19,7 +19,7 @@ class TreatmentPlanConfig:
     radiationMode: str = "photons"
     
     # Number of fractions for the treatment
-    numOfFractions: int = 20
+    numOfFractions: int = 30
 
     # machine parameters
     machine: str = "Generic"

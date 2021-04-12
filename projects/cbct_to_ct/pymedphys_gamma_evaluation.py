@@ -17,8 +17,7 @@ logger = logging.getLogger(__name__)
 # https://docs.pymedphys.com/lib/howto/gamma/effect-of-noise.html
 GAMMA_OPTS = {
     'dose_percent_threshold': 2,
-    'distance_mm_threshold': 1,
-    'local_gamma': False
+    'distance_mm_threshold': 2,
 }
 
 # Try out 1%/1mm and 1%/2mm
@@ -32,22 +31,6 @@ def dose_evaluation(CT, CBCT, sCT, patient_dir='patient'):
     metric_dict = {
         'patient': patient_dir.stem
     }
-
-    # Compute dose differences for CT-CBCT and sCT-CT
-    CBCT_dose_diff = dose_eval.calculate_dose_diff(CT, CBCT)
-    sCT_dose_diff = dose_eval.calculate_dose_diff(CT, sCT)
-
-
-    metric_dict.update({f'cbct_dose_diff_{k}': v for k, v in image_utils.get_abs_value_stats(CBCT_dose_diff).items()})
-    metric_dict.update({f'sct_dose_diff_{k}': v for k, v in image_utils.get_abs_value_stats(sCT_dose_diff).items()})
-
-    sitk.WriteImage(CBCT_dose_diff, str(patient_dir / "cbct_dose_diff.nrrd"))
-    sitk.WriteImage(sCT_dose_diff, str(patient_dir / "sct_dose_diff.nrrd"))
-    
-    # Save image preview
-
-    image_utils.save_dose_diff(CBCT_dose_diff, label='Original - Relative dose difference', dir=patient_dir, limit=(-1, 1))
-    image_utils.save_dose_diff(sCT_dose_diff, label='Translated - Relative dose difference', dir=patient_dir, limit=(-1, 1))
 
     # Compute gamma passing rates for CT-CBCT and sCT-CT
     CBCT_gamma, passing_rate_CBCT = dose_eval.calculate_gamma(CT, CBCT, GAMMA_OPTS)
@@ -73,6 +56,7 @@ def main(args):
     df = pd.DataFrame()
 
     for folder in dataset_path.iterdir():
+        folder = folder / "dose"
         if folder.is_dir():
             CT_path = folder / "ct_dose.nrrd"
             CBCT_path = folder / "cbct_dose.nrrd"
