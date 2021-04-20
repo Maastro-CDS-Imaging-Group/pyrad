@@ -13,14 +13,16 @@ from pyrad.configs import tp_config
 
 
 class DoseCalculation:
-    def __init__(self, config=None):
-        self.setup_environment()
+    def __init__(self, config=None, projects_dir=None):
+        self.setup_environment(projects_dir)
         self.set_treatment_plan(config)
 
-    def setup_environment(self):
+    def setup_environment(self, projects_dir=None):
         logger.add('dose_calculation.log', level='INFO')
         self.oc = Oct2Py(logger=logger)
         utils.add_oc_paths(self.oc)
+        if projects_dir is not None:
+            self.oc.addpath(projects_dir)
 
     def run(self, ct: Path, masks: dict, save_path: Path = None):
         self.ct = Path(ct)

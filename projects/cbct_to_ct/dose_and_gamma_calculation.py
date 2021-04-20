@@ -61,7 +61,7 @@ def main(args):
 
 
 def calculate_dose(patient):
-    pyrad_dose_calculation = dose_calculation.DoseCalculation(config="./projects/cbct_to_ct/configs/plan_config.yaml")
+    pyrad_dose_calculation = dose_calculation.DoseCalculation(config="./projects/cbct_to_ct/configs/plan_config.yaml", projects_dir="./projects/cbct_to_ct")
     CT = patient / "deformed.nrrd"
     CBCT = patient / "target.nrrd"
     sCT = patient / "translated.nrrd"
