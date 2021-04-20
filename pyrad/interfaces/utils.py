@@ -43,7 +43,7 @@ def fetch_masks_from_config(patient, mask_set):
 
     return masks
 
-def compute_gamma_index(dose1, dose2, resolution, dose_difference=3, dta=3, n=0, local=True):
+def compute_gamma_index(dose1, dose2, resolution, dose_difference=3, dta=3, n=0, local=False):
     # Create new octave instance for gamma index inorder to isolate it.
     oc = Oct2Py()
     add_oc_paths(oc)

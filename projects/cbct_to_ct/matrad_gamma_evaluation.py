@@ -4,18 +4,31 @@ import sys
 import pandas as pd
 import numpy as np
 from oct2py import Oct2Py
+import logging
 
 sys.path.append('.')
 from pyrad.interfaces import utils
-
-GAMMA_OPTS = {
+# List of dicts specifying gamma options
+GAMMA_OPTS = [
+    {
+    'dose_percent_threshold': 1,
+    'distance_mm_threshold': 1,
+},
+{
+    'dose_percent_threshold': 2,
+    'distance_mm_threshold': 2,
+}, {
+    'dose_percent_threshold': 1,
+    'distance_mm_threshold': 2,
+}, {
     'dose_percent_threshold': 3,
     'distance_mm_threshold': 3,
-}
+}]
+
+logger = logging.getLogger(__name__)
 
 def main(args):
     dataset_path = args.dataset_path.resolve()
-    outdir = args.output_dir.resolve()
     df = pd.DataFrame()
     oc = Oct2Py()
 
@@ -29,11 +42,10 @@ def main(args):
             sCT_path = folder / "sct_dose.nrrd"
 
             if not (CT_path.exists() and CBCT_path.exists() and sCT_path.exists()):
-                print(f"Skipping patient {folder}")
+                logger.warning(f"Skipping patient {folder}")
                 continue
                     
-            patient_dir = outdir / folder.parent.stem
-            print(f"Computing for patient {folder.parent.stem}")
+            logger.info(f"Computing for patient {folder.parent.stem}")
             CT = sitk.ReadImage(str(CT_path))
             CBCT = sitk.ReadImage(str(CBCT_path))
             sCT = sitk.ReadImage(str(sCT_path))
@@ -48,19 +60,40 @@ def main(args):
             sCT = sitk.GetArrayFromImage(sCT)
             sCT = np.transpose(sCT, (2, 1, 0))
 
-
-            _, pass_rate = utils.compute_gamma_index(CT, CBCT, resolution, \
-                 dose_difference=GAMMA_OPTS['dose_percent_threshold'], dta=GAMMA_OPTS['distance_mm_threshold'])
-            print(f"Original pass rate: {pass_rate}")
-
-            _, pass_rate = utils.compute_gamma_index(CT, sCT, resolution, \
-                dose_difference=GAMMA_OPTS['dose_percent_threshold'], dta=GAMMA_OPTS['distance_mm_threshold'])
-            print(f"Translated pass rate: {pass_rate}")
+            metric = {}
+            metric["Patient"] = folder.parent.stem
 
 
-    if outdir.exists():
-        df.to_csv(outdir / "metrics.csv")
+            for gamma_opt in GAMMA_OPTS:
+                logger.info(f"Computing for {gamma_opt}")
+                _, pass_rate = utils.compute_gamma_index(CT, CBCT, resolution, \
+                    dose_difference=gamma_opt['dose_percent_threshold'], dta=gamma_opt['distance_mm_threshold'])
+                metric[f"CBCT_passing_rate_{gamma_opt['dose_percent_threshold']}%_{gamma_opt['distance_mm_threshold']}mm"] = pass_rate
+                logger.info(f"CBCT pass rate={pass_rate}")
 
+
+                _, pass_rate = utils.compute_gamma_index(CT, sCT, resolution, \
+                    dose_difference=gamma_opt['dose_percent_threshold'], dta=gamma_opt['distance_mm_threshold'])
+                metric[f"SCT_passing_rate_{gamma_opt['dose_percent_threshold']}%_{gamma_opt['distance_mm_threshold']}mm"] = pass_rate
+                logger.info(f"sCT pass rate={pass_rate}")
+
+            df = df.append(metric, ignore_index=True)
+
+    df.to_csv(dataset_path / "matrad_gamma_results.csv")
+
+
+
+def setup_logging(loglevel):
+    """Setup basic logging
+
+    Args:
+      loglevel (int): minimum loglevel for emitting messages
+    """
+    logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
+    logging.basicConfig(level=loglevel,
+                        stream=sys.stdout,
+                        format=logformat,
+                        datefmt="%Y-%m-%d %H:%M:%S")
 
 if __name__ == "__main__":
     import argparse
@@ -70,12 +103,15 @@ if __name__ == "__main__":
 
     parser.add_argument("dataset_path", help="Path to dataset", type=Path)
 
-    # Output dir to store dose maps and gamma index maps
-    parser.add_argument("--output_dir",
-                        help="Path where the output will be stored",
-                        default="out",
-                        type=Path)
+    parser.add_argument("-v",
+                        "--verbose",
+                        dest="loglevel",
+                        help="set loglevel to INFO",
+                        action="store_const",
+                        const=logging.INFO)
+
+
 
     args = parser.parse_args()
-
+    setup_logging(args.loglevel)
     main(args)
