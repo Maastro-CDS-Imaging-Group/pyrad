@@ -10,11 +10,21 @@ class SteeringProperties:
     # Bixel width: https://medical-dictionary.thefreedictionary.com/bixel
     bixelWidth: int = 5
 
+
+
+@dataclass
+class OptimizerProperties:
+    # Define the flavor of biological optimization for treatment planning 
+    bioOptimization: Optional[str] = None
+
+
 @dataclass
 class TreatmentPlanConfig:
     # Steering properties determining how the beam is to be steered
     propStf: Optional[SteeringProperties] = None
     
+    propOpt: Optional[OptimizerProperties] = None
+
     # Radiation mode: photons, protons, carbon
     radiationMode: str = "photons"
     

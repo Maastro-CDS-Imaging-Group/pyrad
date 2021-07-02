@@ -1,0 +1,6 @@
+propStf:
+  gantryAngles: [0, 65, 135, 230, 295]
+
+radiationMode: 'protons'
+propOpt:
+  bioOptimization: 'const_RBExD'
